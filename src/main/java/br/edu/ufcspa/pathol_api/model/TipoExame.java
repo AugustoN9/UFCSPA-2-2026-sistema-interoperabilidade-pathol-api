@@ -1,0 +1,8 @@
+package br.edu.ufcspa.pathol_api.model;
+
+public enum TipoExame {
+    ANATOMOPATOLOGICO,
+    CITOPATOLOGICO_GINECOLOGICO,
+    CITOPATOLOGICO_ONCOLOGICO,
+    CITOPATOLOGICO_LIQUIDOS
+}

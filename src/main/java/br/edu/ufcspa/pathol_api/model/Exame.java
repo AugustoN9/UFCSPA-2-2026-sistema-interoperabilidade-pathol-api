@@ -1,0 +1,128 @@
+package br.edu.ufcspa.pathol_api.model;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "tb_exame")
+public class Exame {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String numeroExame;
+
+    @Enumerated(EnumType.STRING)
+    private TipoExame tipoExame;
+
+    private LocalDateTime dataRecebimento = LocalDateTime.now();
+
+    private String pacienteProntuario;
+
+    @Column(columnDefinition = "TEXT")
+    private String microscopia;
+
+    private String diagnosticoSugerido;
+
+    private Boolean pesquisaHelicobacterPylori;
+
+    @OneToMany(mappedBy = "exame", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<FrascoAmostra> frascos = new ArrayList<>();
+
+    public Exame() {
+    }
+
+    public Exame(String numeroExame, TipoExame tipoExame, String pacienteProntuario,
+                 String diagnosticoSugerido, Boolean pesquisaHelicobacterPylori) {
+        this.numeroExame = numeroExame;
+        this.tipoExame = tipoExame;
+        this.pacienteProntuario = pacienteProntuario;
+        this.diagnosticoSugerido = diagnosticoSugerido;
+        this.pesquisaHelicobacterPylori = pesquisaHelicobacterPylori;
+    }
+
+    public void adicionarFrasco(FrascoAmostra frasco) {
+        frascos.add(frasco);
+        frasco.setExame(this);
+    }
+
+    // Getters e Setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNumeroExame() {
+        return numeroExame;
+    }
+
+    public void setNumeroExame(String numeroExame) {
+        this.numeroExame = numeroExame;
+    }
+
+    public TipoExame getTipoExame() {
+        return tipoExame;
+    }
+
+    public void setTipoExame(TipoExame tipoExame) {
+        this.tipoExame = tipoExame;
+    }
+
+    public LocalDateTime getDataRecebimento() {
+        return dataRecebimento;
+    }
+
+    public void setDataRecebimento(LocalDateTime dataRecebimento) {
+        this.dataRecebimento = dataRecebimento;
+    }
+
+    public String getPacienteProntuario() {
+        return pacienteProntuario;
+    }
+
+    public void setPacienteProntuario(String pacienteProntuario) {
+        this.pacienteProntuario = pacienteProntuario;
+    }
+
+    public String getMicroscopia() {
+        return microscopia;
+    }
+
+    public void setMicroscopia(String microscopia) {
+        this.microscopia = microscopia;
+    }
+
+    public String getDiagnosticoSugerido() {
+        return diagnosticoSugerido;
+    }
+
+    public void setDiagnosticoSugerido(String diagnosticoSugerido) {
+        this.diagnosticoSugerido = diagnosticoSugerido;
+    }
+
+    public Boolean getPesquisaHelicobacterPylori() {
+        return pesquisaHelicobacterPylori;
+    }
+
+    public void setPesquisaHelicobacterPylori(Boolean pesquisaHelicobacterPylori) {
+        this.pesquisaHelicobacterPylori = pesquisaHelicobacterPylori;
+    }
+
+    public List<FrascoAmostra> getFrascos() {
+        return frascos;
+    }
+
+    public void setFrascos(List<FrascoAmostra> frascos) {
+        this.frascos = frascos;
+    }
+}
