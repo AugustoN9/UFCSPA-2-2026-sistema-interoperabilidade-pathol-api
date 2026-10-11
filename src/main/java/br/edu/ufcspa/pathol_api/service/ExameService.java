@@ -2,12 +2,14 @@ package br.edu.ufcspa.pathol_api.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.ufcspa.pathol_api.dto.BlocoDTO;
 import br.edu.ufcspa.pathol_api.dto.ExameRequestDTO;
+import br.edu.ufcspa.pathol_api.dto.ExameResponseDTO;
 import br.edu.ufcspa.pathol_api.dto.FrascoDTO;
 import br.edu.ufcspa.pathol_api.dto.LaminaDTO;
 import br.edu.ufcspa.pathol_api.model.Bloco;
@@ -29,65 +31,105 @@ public class ExameService {
         this.prontuarioRepository = prontuarioRepository;
     }
 
+    // MÉTODO AUXILIAR: Mapeia Entidade Exame para ExameResponseDTO (Elimina recursão JSON)
+    public ExameResponseDTO converterParaDTO(Exame exame) {
+        ExameResponseDTO dto = new ExameResponseDTO();
+        dto.setId(exame.getId());
+        dto.setNumeroExame(exame.getNumeroExame());
+        dto.setTipoExame(exame.getTipoExame());
+        dto.setPacienteProntuario(exame.getPacienteProntuario());
+        dto.setCidSugerido(exame.getCidSugerido());
+
+        // Mapeamento dos 7 Marcos Temporais
+        dto.setDataColetaProcedimento(exame.getDataColetaProcedimento());
+        dto.setDataSolicitacao(exame.getDataSolicitacao());
+        dto.setDataRecebimento(exame.getDataRecebimento());
+        dto.setDataMacroscopia(exame.getDataMacroscopia());
+        dto.setDataProcessamentoHistologico(exame.getDataProcessamentoHistologico());
+        dto.setDataRecebimentoLamina(exame.getDataRecebimentoLamina());
+        dto.setDataLiberacaoLaudo(exame.getDataLiberacaoLaudo());
+
+        // Laudo
+        dto.setMacroscopia(exame.getMacroscopia());
+        dto.setMicroscopia(exame.getMicroscopia());
+        dto.setDiagnosticoSugerido(exame.getDiagnosticoSugerido());
+
+        return dto;
+    }
+
     // 1. SALVAR (Criar Exame a partir do DTO)
     @Transactional
-    public Exame salvar(ExameRequestDTO dto) {
+    public ExameResponseDTO salvar(ExameRequestDTO dto) {
         validarRegrasClinicas(dto);
         Exame exame = new Exame();
         mapDtoParaEntidade(dto, exame);
-        return exameRepository.save(exame);
+        Exame salvo = exameRepository.save(exame);
+        return converterParaDTO(salvo);
     }
 
     // 2. LISTAR TODOS
-    public List<Exame> listarTodos() {
-        return exameRepository.findAll();
+    public List<ExameResponseDTO> listarTodos() {
+        return exameRepository.findAll().stream()
+                .map(this::converterParaDTO)
+                .collect(Collectors.toList());
     }
 
-    // 3. BUSCAR POR ID
-    public Exame buscarPorId(Long id) {
+    // 3. BUSCAR ENTIDADE POR ID (Uso Interno)
+    public Exame buscarEntidadePorId(Long id) {
         return exameRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exame não encontrado com o ID: " + id));
     }
 
+    // BUSCAR DTO POR ID
+    public ExameResponseDTO buscarPorId(Long id) {
+        return converterParaDTO(buscarEntidadePorId(id));
+    }
+
     // 4. BUSCAR POR NÚMERO DO EXAME
-    public Exame buscarPorNumeroExame(String numeroExame) {
-        return exameRepository.findByNumeroExame(numeroExame)
+    public ExameResponseDTO buscarPorNumeroExame(String numeroExame) {
+        Exame exame = exameRepository.findByNumeroExame(numeroExame)
                 .orElseThrow(() -> new RuntimeException("Exame não encontrado com o número: " + numeroExame));
+        return converterParaDTO(exame);
     }
 
     // 5. BUSCAR POR PRONTUÁRIO DO PACIENTE
-    public List<Exame> buscarPorPacienteProntuario(String pacienteProntuario) {
+    public List<ExameResponseDTO> buscarPorPacienteProntuario(String pacienteProntuario) {
         List<Exame> exames = exameRepository.findByPacienteProntuario(pacienteProntuario);
         if (exames.isEmpty()) {
             throw new RuntimeException("Nenhum exame encontrado para o prontuário: " + pacienteProntuario);
         }
-        return exames;
+        return exames.stream()
+                .map(this::converterParaDTO)
+                .collect(Collectors.toList());
     }
 
     // 6. ATUALIZAR EXAME EXISTENTE
     @Transactional
-    public Exame atualizar(Long id, ExameRequestDTO dto) {
+    public ExameResponseDTO atualizar(Long id, ExameRequestDTO dto) {
         validarRegrasClinicas(dto);
-        Exame exameExistente = buscarPorId(id);
-        exameExistente.getFrascos().clear(); // Limpa as amostras antigas para reescrever
+        Exame exameExistente = buscarEntidadePorId(id);
+        exameExistente.getFrascos().clear();
         mapDtoParaEntidade(dto, exameExistente);
-        return exameRepository.save(exameExistente);
+        Exame atualizado = exameRepository.save(exameExistente);
+        return converterParaDTO(atualizado);
     }
 
     // 7. DELETAR
     @Transactional
     public void deletar(Long id) {
-        Exame exame = buscarPorId(id);
+        Exame exame = buscarEntidadePorId(id);
         exameRepository.delete(exame);
     }
 
     // BUSCAR LISTA POR CID SUGERIDO
-    public List<Exame> buscarPorCidSugerido(String cidSugerido) {
+    public List<ExameResponseDTO> buscarPorCidSugerido(String cidSugerido) {
         List<Exame> exames = exameRepository.findByCidSugerido(cidSugerido);
         if (exames.isEmpty()) {
             throw new RuntimeException("Nenhum exame encontrado para o CID sugerido: " + cidSugerido);
         }
-        return exames;
+        return exames.stream()
+                .map(this::converterParaDTO)
+                .collect(Collectors.toList());
     }
 
     // CONTAR TOTAL DE EXAMES POR CID SUGERIDO
@@ -111,7 +153,6 @@ public class ExameService {
                             + bloco.codigoBloco() + " deve conter ao menos uma lâmina.");
                     }
 
-                    // A primeira lâmina do bloco deve possuir obrigatoriamente a coloração HE
                     LaminaDTO primeiraLamina = laminas.get(0);
                     if (primeiraLamina.coloracao() == null || !"HE".equalsIgnoreCase(primeiraLamina.coloracao().trim())) {
                         throw new IllegalArgumentException("Regra Clínica Violada: A primeira lâmina do bloco " 
@@ -122,20 +163,18 @@ public class ExameService {
         }
     }
 
-    // MÉTODO AUXILIAR: Converte o DTO para a Entidade JPA incluindo o Vínculo com Prontuário e a Linha do Tempo
+    // MÉTODO AUXILIAR: Converte o DTO para a Entidade JPA
     private void mapDtoParaEntidade(ExameRequestDTO dto, Exame exame) {
         exame.setNumeroExame(dto.numeroExame());
         exame.setTipoExame(dto.tipoExame());
         exame.setPacienteProntuario(dto.pacienteProntuario());
         exame.setCidSugerido(dto.cidSugerido());
 
-        // Vincula a entidade Prontuario caso exista cadastrada para o código informado
         if (dto.pacienteProntuario() != null) {
             Optional<Prontuario> prontuarioOpt = prontuarioRepository.findByNumeroProntuario(dto.pacienteProntuario());
             prontuarioOpt.ifPresent(exame::setProntuario);
         }
 
-        // Mapeamento dos 7 marcos temporais
         exame.setDataColetaProcedimento(dto.dataColetaProcedimento());
         exame.setDataSolicitacao(dto.dataSolicitacao());
         exame.setDataRecebimento(dto.dataRecebimento());
