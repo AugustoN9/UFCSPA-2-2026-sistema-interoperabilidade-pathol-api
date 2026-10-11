@@ -19,6 +19,7 @@ import br.edu.ufcspa.pathol_api.model.Exame;
 import br.edu.ufcspa.pathol_api.service.ExameService;
 import br.edu.ufcspa.pathol_api.service.FhirInteropService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -70,38 +71,55 @@ public class ExameController {
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
     )
     @GetMapping("/{id}")
-    public ResponseEntity<Exame> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<Exame> buscarPorId(
+            @Parameter(description = "Identificador único da base de dados (ID)", required = true, example = "1")
+            @PathVariable Long id) {
         return ResponseEntity.ok(exameService.buscarPorId(id));
     }
 
     // 4. BUSCAR POR NÚMERO DO EXAME (GET)
-    @Operation(summary = "Buscar exame pelo número/código único do laudo", description = "Exemplo: EX-2026-1001")
+    @Operation(
+        summary = "Buscar exame pelo número/código único do laudo",
+        description = "Permite a consulta rápida utilizando a codificação interna do laboratório (ex: EX-2026-1001)."
+    )
     @ApiResponse(
         responseCode = "200",
-        description = "Exame localizado por número",
+        description = "Exame localizado com sucesso",
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
     )
+    @ApiResponse(responseCode = "404", description = "Exame não encontrado com o número informado")
     @GetMapping("/numero/{numeroExame}")
-    public ResponseEntity<Exame> buscarPorNumeroExame(@PathVariable String numeroExame) {
+    public ResponseEntity<Exame> buscarPorNumeroExame(
+            @Parameter(description = "Número/Código do exame no formato 'EX-YYYY-XXXX'", required = true, example = "EX-2026-1001")
+            @PathVariable("numeroExame") String numeroExame) {
         return ResponseEntity.ok(exameService.buscarPorNumeroExame(numeroExame));
     }
 
     // 5. BUSCAR POR PRONTUÁRIO DO PACIENTE (GET)
-    @Operation(summary = "Buscar exames vinculados a um prontuário de paciente", description = "Exemplo: PED-1001")
+    @Operation(
+        summary = "Buscar exames vinculados a um prontuário de paciente",
+        description = "Retorna todo o histórico de laudos associados a um identificador pseudonimizado de paciente (ex: PED-1001)."
+    )
     @ApiResponse(
         responseCode = "200",
-        description = "Lista de exames do prontuário localizada",
+        description = "Lista de exames associados ao prontuário recuperada com sucesso",
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
     )
+    @ApiResponse(responseCode = "404", description = "Nenhum exame localizado para o prontuário especificado")
     @GetMapping("/paciente/{pacienteProntuario}")
-    public ResponseEntity<List<Exame>> buscarPorPacienteProntuario(@PathVariable String pacienteProntuario) {
+    public ResponseEntity<List<Exame>> buscarPorPacienteProntuario(
+            @Parameter(description = "Código de prontuário do paciente", required = true, example = "PED-1001")
+            @PathVariable("pacienteProntuario") String pacienteProntuario) {
         return ResponseEntity.ok(exameService.buscarPorPacienteProntuario(pacienteProntuario));
     }
 
     // 6. ATUALIZAR LAUDO (PUT)
     @Operation(summary = "Atualizar um exame existente por ID")
     @PutMapping("/{id}")
-    public ResponseEntity<Exame> atualizarExame(@PathVariable Long id, @RequestBody ExameRequestDTO dto) {
+    public ResponseEntity<Exame> atualizarExame(
+            @Parameter(description = "ID do exame a ser atualizado", required = true)
+            @PathVariable Long id, 
+            @RequestBody ExameRequestDTO dto) {
         Exame exameAtualizado = exameService.atualizar(id, dto);
         return ResponseEntity.ok(exameAtualizado);
     }
@@ -109,7 +127,9 @@ public class ExameController {
     // 7. DELETAR LAUDO (DELETE)
     @Operation(summary = "Excluir um exame por ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarExame(@PathVariable Long id) {
+    public ResponseEntity<Void> deletarExame(
+            @Parameter(description = "ID do exame a ser removido", required = true)
+            @PathVariable Long id) {
         exameService.deletar(id);
         return ResponseEntity.noContent().build();
     }
@@ -131,7 +151,9 @@ public class ExameController {
         )
     )
     @GetMapping(value = "/{id}/fhir", produces = "application/fhir+json")
-    public ResponseEntity<String> obterLaudoFhir(@PathVariable Long id) {
+    public ResponseEntity<String> obterLaudoFhir(
+            @Parameter(description = "ID do exame para conversão HL7 FHIR R4", required = true)
+            @PathVariable Long id) {
         Exame exame = exameService.buscarPorId(id);
         String fhirJson = fhirInteropService.exportarParaFhirJson(exame);
         return ResponseEntity.ok()
