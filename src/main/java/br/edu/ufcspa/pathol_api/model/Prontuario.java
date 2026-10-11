@@ -3,6 +3,8 @@ package br.edu.ufcspa.pathol_api.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,6 +36,7 @@ public class Prontuario {
     private Paciente paciente;
 
     @OneToMany(mappedBy = "prontuario", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("prontuario")
     private List<Exame> exames = new ArrayList<>();
 
     public Prontuario() {}
