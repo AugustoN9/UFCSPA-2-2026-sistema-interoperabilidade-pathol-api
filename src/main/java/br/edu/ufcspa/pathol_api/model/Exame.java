@@ -26,28 +26,29 @@ public class Exame {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String numeroExame; // Ex: EX-2026-1001
+    @Column(nullable = false, unique = true)
+    private String numeroExame;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TipoExame tipoExame;
 
-    private String pacienteProntuario; // Chave/Código textual de busca rápida (ex: PED-1001)
+    private String pacienteProntuario;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prontuario_id")
-    private Prontuario prontuario; // Vínculo com a entidade Prontuário
+    private Prontuario prontuario;
 
     private String cidSugerido;
 
-    // LINHA DO TEMPO (7 MARCOS TEMPORAIS)
-    private LocalDateTime dataColetaProcedimento;    // 1. Coleta / Procedimento Cirúrgico
-    private LocalDateTime dataSolicitacao;             // 2. Solicitação médica
-    private LocalDateTime dataRecebimento;           // 3. Recebimento no laboratório
-    private LocalDateTime dataMacroscopia;            // 4. Clivagem / Macroscopia
-    private LocalDateTime dataProcessamentoHistologico; // 5. Processamento histológico
-    private LocalDateTime dataRecebimentoLamina;      // 6. Recebimento da Lâmina corada
-    private LocalDateTime dataLiberacaoLaudo;         // 7. Microscopia / Liberação do laudo
+    // Os 7 Marcos Temporais do Ciclo de Vida da Biópsia
+    private LocalDateTime dataColetaProcedimento;
+    private LocalDateTime dataSolicitacao;
+    private LocalDateTime dataRecebimento;
+    private LocalDateTime dataMacroscopia;
+    private LocalDateTime dataProcessamentoHistologico;
+    private LocalDateTime dataRecebimentoLamina;
+    private LocalDateTime dataLiberacaoLaudo;
 
     @Column(columnDefinition = "TEXT")
     private String macroscopia;
@@ -58,12 +59,21 @@ public class Exame {
     @Column(columnDefinition = "TEXT")
     private String diagnosticoSugerido;
 
-    @OneToMany(mappedBy = "exame", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Frasco> frascos = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "exame_id")
+    private List<FrascoAmostra> frascos = new ArrayList<>();
 
     public Exame() {}
 
-    // Getters e Setters para todos os campos (incluindo as 7 datas e o prontuario)
+    // Método auxiliar chamado pelo DataLoader e ExameService
+    public void adicionarFrasco(FrascoAmostra frasco) {
+        if (this.frascos == null) {
+            this.frascos = new ArrayList<>();
+        }
+        this.frascos.add(frasco);
+    }
+
+    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -112,6 +122,6 @@ public class Exame {
     public String getDiagnosticoSugerido() { return diagnosticoSugerido; }
     public void setDiagnosticoSugerido(String diagnosticoSugerido) { this.diagnosticoSugerido = diagnosticoSugerido; }
 
-    public List<Frasco> getFrascos() { return frascos; }
-    public void setFrascos(List<Frasco> frascos) { this.frascos = frascos; }
+    public List<FrascoAmostra> getFrascos() { return frascos; }
+    public void setFrascos(List<FrascoAmostra> frascos) { this.frascos = frascos; }
 }
