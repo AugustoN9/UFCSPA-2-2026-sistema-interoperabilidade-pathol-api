@@ -54,6 +54,32 @@ public class ExameService {
         dto.setMicroscopia(exame.getMicroscopia());
         dto.setDiagnosticoSugerido(exame.getDiagnosticoSugerido());
 
+        // Mapeamento Completo de Amostragem (Frascos -> Blocos -> Lâminas)
+        if (exame.getFrascos() != null) {
+            List<FrascoDTO> frascosDTO = exame.getFrascos().stream().map(frasco -> {
+                List<BlocoDTO> blocosDTO = null;
+                if (frasco.getBlocos() != null) {
+                    blocosDTO = frasco.getBlocos().stream().map(bloco -> {
+                        List<LaminaDTO> laminasDTO = null;
+                        if (bloco.getLaminas() != null) {
+                            laminasDTO = bloco.getLaminas().stream()
+                                    .map(lamina -> new LaminaDTO(lamina.getCodigoLamina(), lamina.getColoracao()))
+                                    .collect(Collectors.toList());
+                        }
+                        return new BlocoDTO(bloco.getCodigoBloco(), laminasDTO);
+                    }).collect(Collectors.toList());
+                }
+                return new FrascoDTO(
+                    frasco.getPosicao(),
+                    frasco.getTopografia(),
+                    frasco.getQuantidadeFragmentos(),
+                    blocosDTO
+                );
+            }).collect(Collectors.toList());
+
+            dto.setFrascos(frascosDTO);
+        }
+
         return dto;
     }
 
