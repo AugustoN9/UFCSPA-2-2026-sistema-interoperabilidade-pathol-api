@@ -37,10 +37,11 @@ public class DataLoader implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Exclusão síncrona em lote (evita conflito de chave única no PostgreSQL no boot)
-        exameRepository.deleteAllInBatch();
-        prontuarioRepository.deleteAllInBatch();
-        pacienteRepository.deleteAllInBatch();
+        // deleteAll() aciona a exclusão em cascata (CascadeType.ALL / orphanRemoval)
+        // limpando frascos, blocos e lâminas antes de remover os exames, prontuários e pacientes.
+        exameRepository.deleteAll();
+        prontuarioRepository.deleteAll();
+        pacienteRepository.deleteAll();
 
         // ------------------------------------------------------------------
         // 1. CASO DERMATOLÓGICO: JOÃO DA SILVA (MELANOMA / PUNCH DE PELE)
