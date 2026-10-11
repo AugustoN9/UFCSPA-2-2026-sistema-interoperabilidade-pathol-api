@@ -2,7 +2,6 @@ package br.edu.ufcspa.pathol_api.config;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -38,10 +37,10 @@ public class DataLoader implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Limpa a base inicial para garantir a reconstrução normalizada e coerente
-        exameRepository.deleteAll();
-        prontuarioRepository.deleteAll();
-        pacienteRepository.deleteAll();
+        // Exclusão síncrona em lote (evita conflito de chave única no PostgreSQL no boot)
+        exameRepository.deleteAllInBatch();
+        prontuarioRepository.deleteAllInBatch();
+        pacienteRepository.deleteAllInBatch();
 
         // ------------------------------------------------------------------
         // 1. CASO DERMATOLÓGICO: JOÃO DA SILVA (MELANOMA / PUNCH DE PELE)
@@ -61,7 +60,7 @@ public class DataLoader implements CommandLineRunner {
         exameJoao.setProntuario(prontuarioJoao);
         exameJoao.setCidSugerido("C43.5");
 
-        // Linha do tempo dos 7 marcos (Coleta em Junho/2024 -> João com 36 anos na data)
+        // Linha do tempo dos 7 marcos
         LocalDateTime coletaJoao = LocalDateTime.of(2024, 6, 10, 9, 30);
         configurarSeteMarcos(exameJoao, coletaJoao, 4);
 
@@ -87,7 +86,6 @@ public class DataLoader implements CommandLineRunner {
             String numPed = String.format("PED-%04d", 1000 + i);
             String numExame = String.format("EX-2026-%04d", 1000 + i);
 
-            // Pacientes pediátricos com idades entre 7 e 14 anos nascidos entre 2010 e 2017
             LocalDate nascimento = LocalDate.of(2010 + (i % 7), (i % 12) + 1, (i * 2) % 28 + 1);
             SexoBiologico sexo = (i % 2 == 0) ? SexoBiologico.FEMININO : SexoBiologico.MASCULINO;
 
@@ -106,7 +104,6 @@ public class DataLoader implements CommandLineRunner {
             examePed.setProntuario(prontPed);
             examePed.setCidSugerido(cidsPediatricos[i - 1]);
 
-            // Exames realizados em janelas temporais distribuídas entre 2023 e 2025
             int anoColeta = 2023 + (i % 3);
             LocalDateTime coletaPed = LocalDateTime.of(anoColeta, (i % 12) + 1, (i * 2) % 28 + 1, 8, 0);
             configurarSeteMarcos(examePed, coletaPed, 3);
@@ -134,7 +131,6 @@ public class DataLoader implements CommandLineRunner {
         }
     }
 
-    // Método auxiliar para gerar a rastreabilidade temporal dos 7 marcos
     private void configurarSeteMarcos(Exame exame, LocalDateTime dataColeta, int diasProcessamento) {
         exame.setDataColetaProcedimento(dataColeta);
         exame.setDataSolicitacao(dataColeta.plusHours(2));
