@@ -37,11 +37,10 @@ public class DataLoader implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // deleteAll() aciona a exclusão em cascata (CascadeType.ALL / orphanRemoval)
-        // limpando frascos, blocos e lâminas antes de remover os exames, prontuários e pacientes.
-        exameRepository.deleteAll();
-        prontuarioRepository.deleteAll();
-        pacienteRepository.deleteAll();
+        // Se a base já tiver sido populada no PostgreSQL, não executa o DataLoader novamente
+        if (pacienteRepository.count() > 0) {
+            return;
+        }
 
         // ------------------------------------------------------------------
         // 1. CASO DERMATOLÓGICO: JOÃO DA SILVA (MELANOMA / PUNCH DE PELE)
@@ -61,7 +60,6 @@ public class DataLoader implements CommandLineRunner {
         exameJoao.setProntuario(prontuarioJoao);
         exameJoao.setCidSugerido("C43.5");
 
-        // Linha do tempo dos 7 marcos
         LocalDateTime coletaJoao = LocalDateTime.of(2024, 6, 10, 9, 30);
         configurarSeteMarcos(exameJoao, coletaJoao, 4);
 
