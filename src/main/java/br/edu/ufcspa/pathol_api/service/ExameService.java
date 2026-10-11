@@ -1,6 +1,7 @@
 package br.edu.ufcspa.pathol_api.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,15 +14,19 @@ import br.edu.ufcspa.pathol_api.model.Bloco;
 import br.edu.ufcspa.pathol_api.model.Exame;
 import br.edu.ufcspa.pathol_api.model.FrascoAmostra;
 import br.edu.ufcspa.pathol_api.model.Lamina;
+import br.edu.ufcspa.pathol_api.model.Prontuario;
 import br.edu.ufcspa.pathol_api.repository.ExameRepository;
+import br.edu.ufcspa.pathol_api.repository.ProntuarioRepository;
 
 @Service
 public class ExameService {
 
     private final ExameRepository exameRepository;
+    private final ProntuarioRepository prontuarioRepository;
 
-    public ExameService(ExameRepository exameRepository) {
+    public ExameService(ExameRepository exameRepository, ProntuarioRepository prontuarioRepository) {
         this.exameRepository = exameRepository;
+        this.prontuarioRepository = prontuarioRepository;
     }
 
     // 1. SALVAR (Criar Exame a partir do DTO)
@@ -117,12 +122,28 @@ public class ExameService {
         }
     }
 
-    // MÉTODO AUXILIAR: Converte a árvore de DTOs para o Grafo de Entidades JPA
+    // MÉTODO AUXILIAR: Converte o DTO para a Entidade JPA incluindo o Vínculo com Prontuário e a Linha do Tempo
     private void mapDtoParaEntidade(ExameRequestDTO dto, Exame exame) {
         exame.setNumeroExame(dto.numeroExame());
         exame.setTipoExame(dto.tipoExame());
         exame.setPacienteProntuario(dto.pacienteProntuario());
         exame.setCidSugerido(dto.cidSugerido());
+
+        // Vincula a entidade Prontuario caso exista cadastrada para o código informado
+        if (dto.pacienteProntuario() != null) {
+            Optional<Prontuario> prontuarioOpt = prontuarioRepository.findByNumeroProntuario(dto.pacienteProntuario());
+            prontuarioOpt.ifPresent(exame::setProntuario);
+        }
+
+        // Mapeamento dos 7 marcos temporais
+        exame.setDataColetaProcedimento(dto.dataColetaProcedimento());
+        exame.setDataSolicitacao(dto.dataSolicitacao());
+        exame.setDataRecebimento(dto.dataRecebimento());
+        exame.setDataMacroscopia(dto.dataMacroscopia());
+        exame.setDataProcessamentoHistologico(dto.dataProcessamentoHistologico());
+        exame.setDataRecebimentoLamina(dto.dataRecebimentoLamina());
+        exame.setDataLiberacaoLaudo(dto.dataLiberacaoLaudo());
+
         exame.setMacroscopia(dto.macroscopia());
         exame.setMicroscopia(dto.microscopia());
         exame.setDiagnosticoSugerido(dto.diagnosticoSugerido());
