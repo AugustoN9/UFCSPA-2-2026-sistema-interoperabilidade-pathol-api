@@ -44,7 +44,22 @@ public class ExameService {
                 .orElseThrow(() -> new RuntimeException("Exame não encontrado com o ID: " + id));
     }
 
-    // 4. ATUALIZAR EXAME EXISTENTE
+    // 4. BUSCAR POR NÚMERO DO EXAME
+    public Exame buscarPorNumeroExame(String numeroExame) {
+        return exameRepository.findByNumeroExame(numeroExame)
+                .orElseThrow(() -> new RuntimeException("Exame não encontrado com o número: " + numeroExame));
+    }
+
+    // 5. BUSCAR POR PRONTUÁRIO DO PACIENTE
+    public List<Exame> buscarPorPacienteProntuario(String pacienteProntuario) {
+        List<Exame> exames = exameRepository.findByPacienteProntuario(pacienteProntuario);
+        if (exames.isEmpty()) {
+            throw new RuntimeException("Nenhum exame encontrado para o prontuário: " + pacienteProntuario);
+        }
+        return exames;
+    }
+
+    // 6. ATUALIZAR EXAME EXISTENTE
     @Transactional
     public Exame atualizar(Long id, ExameRequestDTO dto) {
         validarRegrasClinicas(dto);
@@ -54,7 +69,7 @@ public class ExameService {
         return exameRepository.save(exameExistente);
     }
 
-    // 5. DELETAR
+    // 7. DELETAR
     @Transactional
     public void deletar(Long id) {
         Exame exame = buscarPorId(id);
@@ -77,7 +92,7 @@ public class ExameService {
                             + bloco.codigoBloco() + " deve conter ao menos uma lâmina.");
                     }
 
-                    // 1. A primeira lâmina do bloco deve possuir obrigatoriamente a coloração HE
+                    // A primeira lâmina do bloco deve possuir obrigatoriamente a coloração HE
                     LaminaDTO primeiraLamina = laminas.get(0);
                     if (primeiraLamina.coloracao() == null || !"HE".equalsIgnoreCase(primeiraLamina.coloracao().trim())) {
                         throw new IllegalArgumentException("Regra Clínica Violada: A primeira lâmina do bloco " 

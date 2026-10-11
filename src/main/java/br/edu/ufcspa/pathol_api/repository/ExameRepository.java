@@ -12,15 +12,15 @@ import br.edu.ufcspa.pathol_api.model.TipoExame;
 @Repository
 public interface ExameRepository extends JpaRepository<Exame, Long> {
 
-    // Busca rápida pelo código de identificação do laboratório (ex: AP-2026-08912)
+    // Busca rápida pelo código de identificação do exame (ex: EX-2026-1001)
     Optional<Exame> findByNumeroExame(String numeroExame);
 
-    // Filtrar exames por tipo (Anatomopatológico, Citopatológico, etc.)
+    // Busca o histórico de exames vinculados a um prontuário pseudonimizado (ex: PED-1001)
+    List<Exame> findByPacienteProntuario(String pacienteProntuario);
+
+    // Filtrar exames por tipo (ANATOMOPATOLOGICO, CITOPATOLOGICO, etc.)
     List<Exame> findByTipoExame(TipoExame tipoExame);
 
-    // Método para os indicadores epidemiológicos: busca laudos com H. pylori positivo/negativo
-    List<Exame> findByPesquisaHelicobacterPylori(Boolean pesquisaHelicobacterPylori);
-
-    // Contagem direta para os gráficos de prevalência do dashboard epidemiológico
-    long countByPesquisaHelicobacterPyloriTrue();
+    // Busca por CID sugerido no laudo (ex: K29.5)
+    List<Exame> findByCidSugerido(String cidSugerido);
 }

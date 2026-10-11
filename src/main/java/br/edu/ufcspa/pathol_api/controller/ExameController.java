@@ -28,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/exames")
 @CrossOrigin(origins = "*")
-@Tag(name = "Exames Patológicos", description = "Endpoints para gestão de exames e exportação FHIR R4")
+@Tag(name = "Exames Patológicos", description = "Endpoints para gestão de exames e exportação HL7 FHIR R4")
 public class ExameController {
 
     private final ExameService exameService;
@@ -39,18 +39,15 @@ public class ExameController {
         this.fhirInteropService = fhirInteropService;
     }
 
-    // 1. CRIAR LAUDO (POST) - Response application/json
+    // 1. CRIAR LAUDO (POST)
     @Operation(
         summary = "Cadastrar um novo exame",
-        description = "Cria um exame patológico no banco de dados e retorna o objeto persistido em formato JSON convencional."
+        description = "Cria um exame patológico no banco de dados e retorna o objeto persistido."
     )
     @ApiResponse(
         responseCode = "201",
         description = "Exame criado com sucesso",
-        content = @Content(
-            mediaType = "application/json",
-            schema = @Schema(implementation = Exame.class)
-        )
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
     )
     @PostMapping
     public ResponseEntity<Exame> criarExame(@RequestBody ExameRequestDTO dto) {
@@ -65,8 +62,8 @@ public class ExameController {
         return ResponseEntity.ok(exameService.listarTodos());
     }
 
-    // 3. BUSCAR LAUDO POR ID (GET) - Response application/json
-    @Operation(summary = "Buscar exame por ID em JSON padrão")
+    // 3. BUSCAR LAUDO POR ID (GET)
+    @Operation(summary = "Buscar exame por ID da base de dados")
     @ApiResponse(
         responseCode = "200",
         description = "Exame localizado",
@@ -77,24 +74,50 @@ public class ExameController {
         return ResponseEntity.ok(exameService.buscarPorId(id));
     }
 
-    // 4. ATUALIZAR LAUDO (PUT)
+    // 4. BUSCAR POR NÚMERO DO EXAME (GET)
+    @Operation(summary = "Buscar exame pelo número/código único do laudo", description = "Exemplo: EX-2026-1001")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Exame localizado por número",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
+    )
+    @GetMapping("/numero/{numeroExame}")
+    public ResponseEntity<Exame> buscarPorNumeroExame(@PathVariable String numeroExame) {
+        return ResponseEntity.ok(exameService.buscarPorNumeroExame(numeroExame));
+    }
+
+    // 5. BUSCAR POR PRONTUÁRIO DO PACIENTE (GET)
+    @Operation(summary = "Buscar exames vinculados a um prontuário de paciente", description = "Exemplo: PED-1001")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Lista de exames do prontuário localizada",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
+    )
+    @GetMapping("/paciente/{pacienteProntuario}")
+    public ResponseEntity<List<Exame>> buscarPorPacienteProntuario(@PathVariable String pacienteProntuario) {
+        return ResponseEntity.ok(exameService.buscarPorPacienteProntuario(pacienteProntuario));
+    }
+
+    // 6. ATUALIZAR LAUDO (PUT)
+    @Operation(summary = "Atualizar um exame existente por ID")
     @PutMapping("/{id}")
     public ResponseEntity<Exame> atualizarExame(@PathVariable Long id, @RequestBody ExameRequestDTO dto) {
         Exame exameAtualizado = exameService.atualizar(id, dto);
         return ResponseEntity.ok(exameAtualizado);
     }
 
-    // 5. DELETAR LAUDO (DELETE)
+    // 7. DELETAR LAUDO (DELETE)
+    @Operation(summary = "Excluir um exame por ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarExame(@PathVariable Long id) {
         exameService.deletar(id);
         return ResponseEntity.noContent().build();
     }
 
-    // 6. EXPORTAR FHIR R4 (GET) - Response application/fhir+json
+    // 8. EXPORTAR FHIR R4 (GET)
     @Operation(
         summary = "Exportar exame no padrão HL7 FHIR R4",
-        description = "Gera um Bundle FHIR R4 (JSON) contendo DiagnosticReport (LOINC 11526-1), Specimen e Observation (SNOMED CT)."
+        description = "Gera um Bundle FHIR R4 (JSON) contendo DiagnosticReport (LOINC 11526-1 e CID), Specimen e Observation (SNOMED CT)."
     )
     @ApiResponse(
         responseCode = "200",
