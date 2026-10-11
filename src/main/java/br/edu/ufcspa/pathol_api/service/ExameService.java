@@ -67,8 +67,6 @@ public class ExameService {
             throw new IllegalArgumentException("O exame deve conter ao menos um frasco de amostra.");
         }
 
-        boolean possuiColoracaoGiemsa = false;
-
         for (FrascoDTO frasco : dto.frascos()) {
             if (frasco.blocos() != null) {
                 for (BlocoDTO bloco : frasco.blocos()) {
@@ -85,20 +83,8 @@ public class ExameService {
                         throw new IllegalArgumentException("Regra Clínica Violada: A primeira lâmina do bloco " 
                             + bloco.codigoBloco() + " deve possuir obrigatoriamente a coloração 'HE'.");
                     }
-
-                    // Verifica se há alguma lâmina com Giemsa na estrutura
-                    for (LaminaDTO lamina : laminas) {
-                        if (lamina.coloracao() != null && "Giemsa".equalsIgnoreCase(lamina.coloracao().trim())) {
-                            possuiColoracaoGiemsa = true;
-                        }
-                    }
                 }
             }
-        }
-
-        // 2. Se a pesquisa de Helicobacter pylori está marcada, deve haver coloração Giemsa
-        if (Boolean.TRUE.equals(dto.pesquisaHelicobacterPylori()) && !possuiColoracaoGiemsa) {
-            throw new IllegalArgumentException("Regra Clínica Violada: Quando a pesquisa de Helicobacter pylori está ativada, é obrigatório incluir ao menos uma lâmina com coloração 'Giemsa'.");
         }
     }
 
@@ -107,10 +93,10 @@ public class ExameService {
         exame.setNumeroExame(dto.numeroExame());
         exame.setTipoExame(dto.tipoExame());
         exame.setPacienteProntuario(dto.pacienteProntuario());
-        exame.setMacroscopia(dto.macroscopia()); // Atribuído do DTO para a entidade
+        exame.setCidSugerido(dto.cidSugerido());
+        exame.setMacroscopia(dto.macroscopia());
         exame.setMicroscopia(dto.microscopia());
         exame.setDiagnosticoSugerido(dto.diagnosticoSugerido());
-        exame.setPesquisaHelicobacterPylori(dto.pesquisaHelicobacterPylori());
 
         if (dto.frascos() != null) {
             for (FrascoDTO frascoDTO : dto.frascos()) {

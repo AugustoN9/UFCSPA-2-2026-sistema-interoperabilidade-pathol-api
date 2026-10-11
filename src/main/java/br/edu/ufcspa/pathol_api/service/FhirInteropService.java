@@ -1,14 +1,18 @@
 package br.edu.ufcspa.pathol_api.service;
 
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.DiagnosticReport;
+import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Specimen;
+import org.springframework.stereotype.Service;
+
 import br.edu.ufcspa.pathol_api.model.Exame;
 import br.edu.ufcspa.pathol_api.model.FrascoAmostra;
-
-// IMPORTAÇÕES DO HAPI FHIR:
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-
-import org.hl7.fhir.r4.model.*;
-import org.springframework.stereotype.Service;
 
 @Service
 public class FhirInteropService {
@@ -45,6 +49,16 @@ public class FhirInteropService {
             report.setSubject(new Reference("Patient/PRONTUARIO-" + exame.getPacienteProntuario()));
         }
 
+        // Mapeamento do CID-10/CID-11 sugerido no DiagnosticReport
+        if (exame.getCidSugerido() != null && !exame.getCidSugerido().isBlank()) {
+            CodeableConcept conclusionCode = new CodeableConcept();
+            conclusionCode.addCoding()
+                .setSystem("http://hl7.org/fhir/sid/icd-10")
+                .setCode(exame.getCidSugerido())
+                .setDisplay("CID Sugerido");
+            report.addConclusionCode(conclusionCode);
+        }
+
         // Formatação estruturada da conclusão do laudo incluindo Macroscopia, Microscopia e Diagnóstico
         StringBuilder conclusaoLaudo = new StringBuilder();
 
@@ -76,8 +90,15 @@ public class FhirInteropService {
             }
         }
 
-        // 3. Mapeamento da pesquisa de H. pylori como recurso Observation (SNOMED CT)
-        if (exame.getPesquisaHelicobacterPylori() != null) {
+        // 3. Mapeamento dinâmico da pesquisa de H. pylori como recurso Observation (SNOMED CT)
+        boolean possuiGiemsa = exame.getFrascos() != null && exame.getFrascos().stream()
+            .filter(f -> f.getBlocos() != null)
+            .flatMap(f -> f.getBlocos().stream())
+            .filter(b -> b.getLaminas() != null)
+            .flatMap(b -> b.getLaminas().stream())
+            .anyMatch(l -> l.getColoracao() != null && "Giemsa".equalsIgnoreCase(l.getColoracao().trim()));
+
+        if (possuiGiemsa) {
             Observation hpObservation = new Observation();
             hpObservation.setId(new IdType("Observation", "OBS-HP-" + exame.getId()));
             hpObservation.setStatus(Observation.ObservationStatus.FINAL);
@@ -90,9 +111,14 @@ public class FhirInteropService {
                 .setDisplay("Helicobacter pylori status");
             hpObservation.setCode(hpCode);
 
-            // Valor do achado (Positivo / Negativo)
+            // Determina se o diagnóstico foi positivo avaliando o texto do laudo/diagnóstico
+            boolean ehPositivo = exame.getDiagnosticoSugerido() != null && 
+                (exame.getDiagnosticoSugerido().toLowerCase().contains("positiv") || 
+                 exame.getDiagnosticoSugerido().toLowerCase().contains("associada à infecção por helicobacter") ||
+                 exame.getDiagnosticoSugerido().toLowerCase().contains("associado à infecção por helicobacter"));
+
             CodeableConcept hpValue = new CodeableConcept();
-            if (Boolean.TRUE.equals(exame.getPesquisaHelicobacterPylori())) {
+            if (ehPositivo) {
                 hpValue.addCoding()
                     .setSystem("http://snomed.info/sct")
                     .setCode("10828004")

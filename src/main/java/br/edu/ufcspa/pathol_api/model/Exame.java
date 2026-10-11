@@ -35,6 +35,9 @@ public class Exame {
 
     private String pacienteProntuario;
 
+    @Column(length = 20)
+    private String cidSugerido;
+
     @Column(columnDefinition = "TEXT")
     private String macroscopia;
 
@@ -44,8 +47,6 @@ public class Exame {
     @Column(columnDefinition = "TEXT")
     private String diagnosticoSugerido;
 
-    private Boolean pesquisaHelicobacterPylori;
-
     @OneToMany(mappedBy = "exame", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<FrascoAmostra> frascos = new ArrayList<>();
@@ -54,15 +55,15 @@ public class Exame {
     }
 
     public Exame(String numeroExame, TipoExame tipoExame, String pacienteProntuario,
-                 String macroscopia, String microscopia, String diagnosticoSugerido, 
-                 Boolean pesquisaHelicobacterPylori) {
+                 String cidSugerido, String macroscopia, String microscopia, 
+                 String diagnosticoSugerido) {
         this.numeroExame = numeroExame;
         this.tipoExame = tipoExame;
         this.pacienteProntuario = pacienteProntuario;
+        this.cidSugerido = cidSugerido;
         this.macroscopia = macroscopia;
         this.microscopia = microscopia;
         this.diagnosticoSugerido = diagnosticoSugerido;
-        this.pesquisaHelicobacterPylori = pesquisaHelicobacterPylori;
     }
 
     public void adicionarFrasco(FrascoAmostra frasco) {
@@ -112,6 +113,14 @@ public class Exame {
         this.pacienteProntuario = pacienteProntuario;
     }
 
+    public String getCidSugerido() {
+        return cidSugerido;
+    }
+
+    public void setCidSugerido(String cidSugerido) {
+        this.cidSugerido = cidSugerido;
+    }
+
     public String getMacroscopia() {
         return macroscopia;
     }
@@ -134,14 +143,6 @@ public class Exame {
 
     public void setDiagnosticoSugerido(String diagnosticoSugerido) {
         this.diagnosticoSugerido = diagnosticoSugerido;
-    }
-
-    public Boolean getPesquisaHelicobacterPylori() {
-        return pesquisaHelicobacterPylori;
-    }
-
-    public void setPesquisaHelicobacterPylori(Boolean pesquisaHelicobacterPylori) {
-        this.pesquisaHelicobacterPylori = pesquisaHelicobacterPylori;
     }
 
     public List<FrascoAmostra> getFrascos() {
