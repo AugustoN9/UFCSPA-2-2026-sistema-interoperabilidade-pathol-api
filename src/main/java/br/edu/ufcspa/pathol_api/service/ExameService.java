@@ -27,6 +27,7 @@ public class ExameService {
     // 1. SALVAR (Criar Exame a partir do DTO)
     @Transactional
     public Exame salvar(ExameRequestDTO dto) {
+        validarRegrasClinicas(dto);
         Exame exame = new Exame();
         mapDtoParaEntidade(dto, exame);
         return exameRepository.save(exame);
@@ -46,6 +47,7 @@ public class ExameService {
     // 4. ATUALIZAR EXAME EXISTENTE
     @Transactional
     public Exame atualizar(Long id, ExameRequestDTO dto) {
+        validarRegrasClinicas(dto);
         Exame exameExistente = buscarPorId(id);
         exameExistente.getFrascos().clear(); // Limpa as amostras antigas para reescrever
         mapDtoParaEntidade(dto, exameExistente);
@@ -59,11 +61,53 @@ public class ExameService {
         exameRepository.delete(exame);
     }
 
+    // MÉTODO AUXILIAR: Validação das Regras Clínicas Histopatológicas
+    private void validarRegrasClinicas(ExameRequestDTO dto) {
+        if (dto.frascos() == null || dto.frascos().isEmpty()) {
+            throw new IllegalArgumentException("O exame deve conter ao menos um frasco de amostra.");
+        }
+
+        boolean possuiColoracaoGiemsa = false;
+
+        for (FrascoDTO frasco : dto.frascos()) {
+            if (frasco.blocos() != null) {
+                for (BlocoDTO bloco : frasco.blocos()) {
+                    List<LaminaDTO> laminas = bloco.laminas();
+
+                    if (laminas == null || laminas.isEmpty()) {
+                        throw new IllegalArgumentException("Regra Clínica Violada: O bloco " 
+                            + bloco.codigoBloco() + " deve conter ao menos uma lâmina.");
+                    }
+
+                    // 1. A primeira lâmina do bloco deve possuir obrigatoriamente a coloração HE
+                    LaminaDTO primeiraLamina = laminas.get(0);
+                    if (primeiraLamina.coloracao() == null || !"HE".equalsIgnoreCase(primeiraLamina.coloracao().trim())) {
+                        throw new IllegalArgumentException("Regra Clínica Violada: A primeira lâmina do bloco " 
+                            + bloco.codigoBloco() + " deve possuir obrigatoriamente a coloração 'HE'.");
+                    }
+
+                    // Verifica se há alguma lâmina com Giemsa na estrutura
+                    for (LaminaDTO lamina : laminas) {
+                        if (lamina.coloracao() != null && "Giemsa".equalsIgnoreCase(lamina.coloracao().trim())) {
+                            possuiColoracaoGiemsa = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Se a pesquisa de Helicobacter pylori está marcada, deve haver coloração Giemsa
+        if (Boolean.TRUE.equals(dto.pesquisaHelicobacterPylori()) && !possuiColoracaoGiemsa) {
+            throw new IllegalArgumentException("Regra Clínica Violada: Quando a pesquisa de Helicobacter pylori está ativada, é obrigatório incluir ao menos uma lâmina com coloração 'Giemsa'.");
+        }
+    }
+
     // MÉTODO AUXILIAR: Converte a árvore de DTOs para o Grafo de Entidades JPA
     private void mapDtoParaEntidade(ExameRequestDTO dto, Exame exame) {
         exame.setNumeroExame(dto.numeroExame());
         exame.setTipoExame(dto.tipoExame());
         exame.setPacienteProntuario(dto.pacienteProntuario());
+        exame.setMacroscopia(dto.macroscopia()); // Atribuído do DTO para a entidade
         exame.setMicroscopia(dto.microscopia());
         exame.setDiagnosticoSugerido(dto.diagnosticoSugerido());
         exame.setPesquisaHelicobacterPylori(dto.pesquisaHelicobacterPylori());

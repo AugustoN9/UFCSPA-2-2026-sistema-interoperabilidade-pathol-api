@@ -3,7 +3,7 @@ package br.edu.ufcspa.pathol_api.service;
 import br.edu.ufcspa.pathol_api.model.Exame;
 import br.edu.ufcspa.pathol_api.model.FrascoAmostra;
 
-// IMPORTAÇÕES CORRETAS DO HAPI FHIR:
+// IMPORTAÇÕES DO HAPI FHIR:
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
@@ -45,7 +45,20 @@ public class FhirInteropService {
             report.setSubject(new Reference("Patient/PRONTUARIO-" + exame.getPacienteProntuario()));
         }
 
-        report.setConclusion(exame.getDiagnosticoSugerido());
+        // Formatação estruturada da conclusão do laudo incluindo Macroscopia, Microscopia e Diagnóstico
+        StringBuilder conclusaoLaudo = new StringBuilder();
+
+        if (exame.getMacroscopia() != null && !exame.getMacroscopia().isBlank()) {
+            conclusaoLaudo.append("MACROSCOPIA:\n").append(exame.getMacroscopia()).append("\n\n");
+        }
+        if (exame.getMicroscopia() != null && !exame.getMicroscopia().isBlank()) {
+            conclusaoLaudo.append("MICROSCOPIA:\n").append(exame.getMicroscopia()).append("\n\n");
+        }
+        if (exame.getDiagnosticoSugerido() != null && !exame.getDiagnosticoSugerido().isBlank()) {
+            conclusaoLaudo.append("DIAGNÓSTICO:\n").append(exame.getDiagnosticoSugerido());
+        }
+
+        report.setConclusion(conclusaoLaudo.toString().trim());
 
         // 2. Mapeamento dos Frascos/Amostras em recursos Specimen
         if (exame.getFrascos() != null) {

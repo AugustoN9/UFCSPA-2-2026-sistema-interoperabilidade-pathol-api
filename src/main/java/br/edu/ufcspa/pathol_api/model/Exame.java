@@ -1,10 +1,21 @@
 package br.edu.ufcspa.pathol_api.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "tb_exame")
@@ -25,8 +36,12 @@ public class Exame {
     private String pacienteProntuario;
 
     @Column(columnDefinition = "TEXT")
+    private String macroscopia;
+
+    @Column(columnDefinition = "TEXT")
     private String microscopia;
 
+    @Column(columnDefinition = "TEXT")
     private String diagnosticoSugerido;
 
     private Boolean pesquisaHelicobacterPylori;
@@ -39,10 +54,13 @@ public class Exame {
     }
 
     public Exame(String numeroExame, TipoExame tipoExame, String pacienteProntuario,
-                 String diagnosticoSugerido, Boolean pesquisaHelicobacterPylori) {
+                 String macroscopia, String microscopia, String diagnosticoSugerido, 
+                 Boolean pesquisaHelicobacterPylori) {
         this.numeroExame = numeroExame;
         this.tipoExame = tipoExame;
         this.pacienteProntuario = pacienteProntuario;
+        this.macroscopia = macroscopia;
+        this.microscopia = microscopia;
         this.diagnosticoSugerido = diagnosticoSugerido;
         this.pesquisaHelicobacterPylori = pesquisaHelicobacterPylori;
     }
@@ -92,6 +110,14 @@ public class Exame {
 
     public void setPacienteProntuario(String pacienteProntuario) {
         this.pacienteProntuario = pacienteProntuario;
+    }
+
+    public String getMacroscopia() {
+        return macroscopia;
+    }
+
+    public void setMacroscopia(String macroscopia) {
+        this.macroscopia = macroscopia;
     }
 
     public String getMicroscopia() {

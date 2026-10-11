@@ -7,9 +7,10 @@ import br.edu.ufcspa.pathol_api.model.TipoExame;
 public record ExameRequestDTO(
     String numeroExame,                 // Ex: AP-2026-08912
     TipoExame tipoExame,                // ANATOMOPATOLOGICO, CITOPATOLOGICO...
-    String pacienteProntuario,         // Identificador pseudonimizado (LGPD)
+    String pacienteProntuario,          // Identificador pseudonimizado (LGPD)
+    String macroscopia,                 // Descrição macrossópica (peça/frasco/fragmentos)
     String microscopia,                 // Descrição microscópica detalhada
     String diagnosticoSugerido,         // Conclusão diagnóstica
     Boolean pesquisaHelicobacterPylori, // Flag para análise epidemiológica
-    List<FrascoDTO> frascos            // Lista de frascos/amostras do exame
+    List<FrascoDTO> frascos             // Lista de frascos/amostras do exame
 ) {}
