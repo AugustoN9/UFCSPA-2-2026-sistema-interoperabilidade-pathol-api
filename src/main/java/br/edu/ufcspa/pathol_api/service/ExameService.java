@@ -76,6 +76,20 @@ public class ExameService {
         exameRepository.delete(exame);
     }
 
+    // BUSCAR LISTA POR CID SUGERIDO
+    public List<Exame> buscarPorCidSugerido(String cidSugerido) {
+        List<Exame> exames = exameRepository.findByCidSugerido(cidSugerido);
+        if (exames.isEmpty()) {
+            throw new RuntimeException("Nenhum exame encontrado para o CID sugerido: " + cidSugerido);
+        }
+        return exames;
+    }
+
+    // CONTAR TOTAL DE EXAMES POR CID SUGERIDO
+    public long contarPorCidSugerido(String cidSugerido) {
+        return exameRepository.countByCidSugerido(cidSugerido);
+    }
+
     // MÉTODO AUXILIAR: Validação das Regras Clínicas Histopatológicas
     private void validarRegrasClinicas(ExameRequestDTO dto) {
         if (dto.frascos() == null || dto.frascos().isEmpty()) {

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.edu.ufcspa.pathol_api.dto.CidCountResponseDTO;
 import br.edu.ufcspa.pathol_api.dto.ExameRequestDTO;
 import br.edu.ufcspa.pathol_api.model.Exame;
 import br.edu.ufcspa.pathol_api.service.ExameService;
@@ -132,6 +133,43 @@ public class ExameController {
             @PathVariable Long id) {
         exameService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // BUSCAR LISTA DE EXAMES POR CID SUGERIDO (GET)
+    @Operation(
+        summary = "Buscar exames filtrados por CID Sugerido",
+        description = "Retorna a lista de exames anatomopatológicos cujo laudo apresenta a codificação especificada (ex: K29.5, K29.3, C43.5)."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Lista de exames associados ao CID recuperada com sucesso",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Exame.class))
+    )
+    @ApiResponse(responseCode = "404", description = "Nenhum exame localizado para o CID informado")
+    @GetMapping("/cid/{cidSugerido}")
+    public ResponseEntity<List<Exame>> buscarPorCidSugerido(
+            @Parameter(description = "Código CID-10 / CID-11 (ex: K29.5)", required = true, example = "K29.5")
+            @PathVariable("cidSugerido") String cidSugerido) {
+        List<Exame> exames = exameService.buscarPorCidSugerido(cidSugerido);
+        return ResponseEntity.ok(exames);
+    }
+
+    // OBTER CONTAGEM / MÉTRICA POR CID SUGERIDO (GET)
+    @Operation(
+        summary = "Obter contagem de exames por CID Sugerido (Métrica Epidemiológica)",
+        description = "Retorna o total quantitativo de laudos cadastrados para determinado CID. Ideal para alimentação de cartões de KPI e gráficos."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Contagem recuperada com sucesso",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = CidCountResponseDTO.class))
+    )
+    @GetMapping("/cid/{cidSugerido}/contagem")
+    public ResponseEntity<CidCountResponseDTO> contarPorCidSugerido(
+            @Parameter(description = "Código CID-10 / CID-11 (ex: K29.5)", required = true, example = "K29.5")
+            @PathVariable("cidSugerido") String cidSugerido) {
+        long total = exameService.contarPorCidSugerido(cidSugerido);
+        return ResponseEntity.ok(new CidCountResponseDTO(cidSugerido, total));
     }
 
     // 8. EXPORTAR FHIR R4 (GET)
