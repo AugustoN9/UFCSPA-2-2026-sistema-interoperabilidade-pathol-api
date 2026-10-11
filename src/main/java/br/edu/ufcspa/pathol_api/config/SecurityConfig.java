@@ -21,12 +21,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Desabilitado para APIs REST stateless
+            .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rotas do Swagger públicas para visualização da documentação
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                // Todas as demais rotas da API requerem autenticação
+                // Rotas do Swagger públicas
+                .requestMatchers(
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/v3/api-docs/**",
+                    "/v3/api-docs",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
+                // As demais rotas da API exigem autenticação HTTP Basic
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());
@@ -36,7 +43,6 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        // Usuário padrão para acesso à API (pode ser movido para variáveis de ambiente futuramente)
         UserDetails admin = User.builder()
                 .username("pathol_admin")
                 .password(passwordEncoder.encode("Pathol#2026"))
